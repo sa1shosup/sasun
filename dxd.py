@@ -1,201 +1,155 @@
 import os
-import logging
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# Bot token from BotFather
-TOKEN = "7942282080:AAGYeFmFyLtibd4AB1rcLxMDqhNoq22_T4s"
+# Конфигурация
+TOKEN = "7942282080:AAGYeFmFyLtibd4AB1rcLxMDqhNoq22_T4s"  # Замените на реальный токен
+FONT_PATH = "arial.ttf"  # Путь к шрифту (можно использовать стандартный)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Send a message when the command /start is issued."""
-    user = update.effective_user
-    await update.message.reply_text(
-        f"Привет {user.first_name}!\n\n"
-        "Я бот для генерации выписок из системы электронной очереди.\n\n"
-        "Отправьте мне следующие данные в одном сообщении, разделяя их переносом строки:\n"
-        "1. Номер бронирования (например, АЗ34ВЕСF0368C)\n"
-        "2. Пункт пропуска (например, Нур Жолы - Хоргос)\n"
-        "3. Дата (например, 04.03.2025)\n"
-        "4. Ориентировочное время (например, 21:00-22:00)\n"
-        "5. Номерной знак транспорта\n"
-        "6. Номерной знак прицепа (если нет, напишите 'нет')\n"
-        "7. Страна регистрации\n\n"
-        "Пример сообщения:\n"
-        "АЗ34ВЕСF0368C\n"
-        "Нур Жолы - Хоргос\n"
-        "04.03.2025\n"
-        "21:00-22:00\n"
-        "ABC123\n"
-        "нет\n"
-        "Казахстан"
-    )
+    """Отправляем инструкцию по использованию"""
+    instructions = """
+    Отправьте данные для выписки в следующем формате:
+    
+    1. Номер бронирования (например: АЗ34ВЕСF0368C)
+    2. Пункт пропуска (например: Нур Жолы - Хоргос)
+    3. Дата (например: 04.03.2025)
+    4. Временной интервал (например: 21:00-22:00)
+    5. Номер транспорта (например: ABC123)
+    6. Номер прицепа (или 'нет')
+    7. Страна регистрации (например: Казахстан)
+    """
+    await update.message.reply_text(instructions)
 
 async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Generate the customs document image."""
     try:
-        # Split user input into lines
-        lines = update.message.text.split('\n')
+        # Разбираем ввод пользователя
+        lines = [line.strip() for line in update.message.text.split('\n') if line.strip()]
         if len(lines) < 7:
-            await update.message.reply_text("Пожалуйста, предоставьте все необходимые данные (7 строк).")
+            await update.message.reply_text("Ошибка: нужно ровно 7 строк данных!")
             return
 
-        # Extract data from user input
-        booking_number = lines[0].strip()
-        checkpoint = lines[1].strip()
-        date = lines[2].strip()
-        time_range = lines[3].strip()
-        vehicle_plate = lines[4].strip()
-        trailer_plate = lines[5].strip()
-        country = lines[6].strip()
-
-        # Create a blank image (white background)
+        booking_num, checkpoint, date, time_range, vehicle, trailer, country = lines[:7]
+        
+        # Создаем изображение
         img = Image.new('RGB', (800, 1200), color='white')
-        d = ImageDraw.Draw(img)
-
-        # Load fonts (you'll need to have these font files or use default ones)
+        draw = ImageDraw.Draw(img)
+        
+        # Загружаем шрифты
         try:
-            title_font = ImageFont.truetype("arialbd.ttf", 24)
-            header_font = ImageFont.truetype("arialbd.ttf", 20)
-            content_font = ImageFont.truetype("arial.ttf", 18)
-            bold_font = ImageFont.truetype("arialbd.ttf", 18)
+            font_large_bold = ImageFont.truetype(FONT_PATH, 24)
+            font_medium_bold = ImageFont.truetype(FONT_PATH, 20)
+            font_regular = ImageFont.truetype(FONT_PATH, 18)
+            font_bold = ImageFont.truetype(FONT_PATH, 18)
         except:
-            # Fallback to default fonts if specified fonts not available
-            title_font = ImageFont.load_default()
-            header_font = ImageFont.load_default()
-            content_font = ImageFont.load_default()
-            bold_font = ImageFont.load_default()
+            # Fallback на стандартные шрифты
+            font_large_bold = ImageFont.load_default(size=24)
+            font_medium_bold = ImageFont.load_default(size=20)
+            font_regular = ImageFont.load_default(size=18)
+            font_bold = ImageFont.load_default(size=18)
 
-        # Current date and time for the print stamp
-        print_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        y_position = 50  # Стартовая позиция по вертикали
 
-        # Draw the document content
-        y_position = 50
-
-        # Title
-        d.text((50, y_position), "1 of 1", fill="black", font=title_font)
+        # Заголовок
+        draw.text((50, y_position), "1 of 1", fill="black", font=font_large_bold)
         y_position += 40
 
-        # Header
-        d.text((50, y_position), "ВЫПИСКА ИЗ СИСТЕМЫ ЭЛЕКТРОННОЙ ОЧЕРЕДИ", fill="black", font=header_font)
+        # Основной заголовок
+        draw.text((50, y_position), "ВЫПИСКА ИЗ СИСТЕМЫ ЭЛЕКТРОННОЙ ОЧЕРЕДИ", fill="black", font=font_medium_bold)
         y_position += 40
 
-        # Print date
-        d.text((50, y_position), f"Дата и время распечатки: {print_date}", fill="black", font=content_font)
+        # Дата и время
+        print_time = datetime.now().strftime("%d.%m.%Y %H:%M")
+        draw.text((50, y_position), f"Дата и время распечатки: {print_time}", fill="black", font=font_regular)
         y_position += 60
 
-        # Booking section
-        d.text((50, y_position), "БРОНИРОВАНИЕ", fill="black", font=header_font)
+        # Секция бронирования
+        draw.text((50, y_position), "БРОНИРОВАНИЕ", fill="black", font=font_medium_bold)
         y_position += 30
-        d.text((70, y_position), "- Статус", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- № бронирования", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- Пункт пропуска", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- Дата", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- Ориентировочное время", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- Тип очереди", fill="black", font=content_font)
-        y_position += 40
+        for item in ["- Статус", "- № бронирования", "- Пункт пропуска", 
+                    "- Дата", "- Ориентировочное время", "- Тип очереди"]:
+            draw.text((70, y_position), item, fill="black", font=font_regular)
+            y_position += 25
+        y_position += 15
 
-        # Divider line
-        d.line([(50, y_position), (750, y_position)], fill="black", width=2)
+        # Разделительная линия
+        draw.line([(50, y_position), (750, y_position)], fill="black", width=2)
         y_position += 20
 
-        # Booking details
-        d.text((50, y_position), booking_number, fill="black", font=bold_font)
-        y_position += 30
-        d.text((50, y_position), checkpoint, fill="black", font=bold_font)
-        y_position += 30
-        d.text((50, y_position), date, fill="black", font=bold_font)
-        y_position += 30
-        d.text((50, y_position), time_range, fill="black", font=bold_font)
-        y_position += 50
-
-        # Divider line
-        d.line([(50, y_position), (750, y_position)], fill="black", width=2)
+        # Данные бронирования
+        for text in [booking_num, checkpoint, date, time_range]:
+            draw.text((50, y_position), text, fill="black", font=font_bold)
+            y_position += 30
         y_position += 20
 
-        # Transport section
-        d.text((50, y_position), "ТРАНСПОРТ", fill="black", font=header_font)
-        y_position += 30
-        d.text((70, y_position), "- Номерной знак транспорта", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- Номерной знак прицепа", fill="black", font=content_font)
-        y_position += 25
-        d.text((70, y_position), "- Страна регистрации", fill="black", font=content_font)
-        y_position += 40
-
-        # Transport details
-        d.text((50, y_position), vehicle_plate, fill="black", font=bold_font)
-        y_position += 30
-        d.text((50, y_position), trailer_plate if trailer_plate.lower() != 'нет' else "Нет", fill="black", font=bold_font)
-        y_position += 30
-        d.text((50, y_position), country, fill="black", font=bold_font)
-        y_position += 50
-
-        # Divider line
-        d.line([(50, y_position), (750, y_position)], fill="black", width=2)
+        # Разделительная линия
+        draw.line([(50, y_position), (750, y_position)], fill="black", width=2)
         y_position += 20
 
-        # Foundation section
-        d.text((50, y_position), "ФОНДАЦИЯ", fill="black", font=header_font)
+        # Транспорт
+        draw.text((50, y_position), "ТРАНСПОРТ", fill="black", font=font_medium_bold)
         y_position += 30
-        d.text((70, y_position), "- Цифровая платформа для бизнеса", fill="black", font=content_font)
+        for item in ["- Номерной знак транспорта", "- Номерной знак прицепа", 
+                    "- Страна регистрации"]:
+            draw.text((70, y_position), item, fill="black", font=font_regular)
+            y_position += 25
+        y_position += 15
+
+        # Данные транспорта
+        for text in [vehicle, trailer if trailer.lower() != 'нет' else "Нет", country]:
+            draw.text((50, y_position), text, fill="black", font=font_bold)
+            y_position += 30
+        y_position += 20
+
+        # Разделительная линия
+        draw.line([(50, y_position), (750, y_position)], fill="black", width=2)
+        y_position += 20
+
+        # Фондация
+        draw.text((50, y_position), "ФОНДАЦИЯ", fill="black", font=font_medium_bold)
+        y_position += 30
+        draw.text((70, y_position), "- Цифровая платформа для бизнеса", fill="black", font=font_regular)
         y_position += 50
 
-        # Divider line
-        d.line([(50, y_position), (750, y_position)], fill="black", width=2)
+        # Разделительная линия
+        draw.line([(50, y_position), (750, y_position)], fill="black", width=2)
         y_position += 30
 
-        # Footer note
-        d.text((50, y_position), "Для подтверждения бронирования предъявите QR для сканирования на пункте пропуска", 
-              fill="black", font=content_font)
+        # Подпись
+        draw.text((50, y_position), "Для подтверждения бронирования предъявите QR для сканирования на пункте пропуска", 
+                 fill="black", font=font_regular)
         y_position += 50
 
-        # Final line
-        d.line([(50, y_position), (750, y_position)], fill="black", width=2)
+        # Финальная линия
+        draw.line([(50, y_position), (750, y_position)], fill="black", width=2)
         y_position += 30
 
-        # CARGO RUQSAT
-        d.text((300, y_position), "CARGO RUQSAT", fill="black", font=header_font)
+        # Логотип
+        draw.text((300, y_position), "CARGO RUQSAT", fill="black", font=font_medium_bold)
 
-        # Save image to bytes
+        # Сохраняем изображение
         img_byte_arr = BytesIO()
         img.save(img_byte_arr, format='PNG')
         img_byte_arr.seek(0)
 
-        # Send the image to user
+        # Отправляем пользователю
         await update.message.reply_photo(photo=img_byte_arr, caption="Ваша выписка готова!")
 
     except Exception as e:
-        logger.error(f"Error generating document: {e}")
-        await update.message.reply_text("Произошла ошибка при генерации документа. Пожалуйста, проверьте введенные данные и попробуйте снова.")
+        await update.message.reply_text(f"Произошла ошибка: {str(e)}")
 
 def main():
-    """Start the bot."""
-    # Create the Application and pass it your bot's token.
-    application = Application.builder().token(TOKEN).build()
-
-    # on different commands - answer in Telegram
-    application.add_handler(CommandHandler("start", start))
-
-    # on non command i.e message - generate document
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, generate_document))
-
-    # Run the bot until the user presses Ctrl-C
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    """Запуск бота"""
+    app = Application.builder().token(TOKEN).build()
+    
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, generate_document))
+    
+    print("Бот запущен и ожидает сообщений...")
+    app.run_polling()
 
 if __name__ == '__main__':
     main()
