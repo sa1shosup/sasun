@@ -20,24 +20,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     user = update.effective_user
     await update.message.reply_text(
-        f"妤把我志快找 {user.first_name}!\n\n"
-        "岐 忌抉找 忱抖攸 忍快扶快把忘扯我我 志抑扭我扼抉抗 我戒 扼我扼找快技抑 改抖快抗找把抉扶扶抉抄 抉折快把快忱我.\n\n"
-        "妍找扭把忘志抆找快 技扶快 扼抖快忱批攻投我快 忱忘扶扶抑快 志 抉忱扶抉技 扼抉抉忌投快扶我我, 把忘戒忱快抖攸攸 我抒 扭快把快扶抉扼抉技 扼找把抉抗我:\n"
-        "1. 妖抉技快把 忌把抉扶我把抉志忘扶我攸 (扶忘扭把我技快把, 均妝34圾圻妊F0368C)\n"
-        "2. 妤批扶抗找 扭把抉扭批扼抗忘 (扶忘扭把我技快把, 妖批把 夾抉抖抑 - 孚抉把忍抉扼)\n"
-        "3. 坏忘找忘 (扶忘扭把我技快把, 04.03.2025)\n"
-        "4. 妍把我快扶找我把抉志抉折扶抉快 志把快技攸 (扶忘扭把我技快把, 21:00-22:00)\n"
-        "5. 妖抉技快把扶抉抄 戒扶忘抗 找把忘扶扼扭抉把找忘\n"
-        "6. 妖抉技快把扶抉抄 戒扶忘抗 扭把我扯快扭忘 (快扼抖我 扶快找, 扶忘扭我扮我找快 '扶快找')\n"
-        "7. 妊找把忘扶忘 把快忍我扼找把忘扯我我\n\n"
-        "妤把我技快把 扼抉抉忌投快扶我攸:\n"
-        "均妝34圾圻妊F0368C\n"
-        "妖批把 夾抉抖抑 - 孚抉把忍抉扼\n"
+        f"Привет {user.first_name}!\n\n"
+        "Я бот для генерации выписок из системы электронной очереди.\n\n"
+        "Отправьте мне следующие данные в одном сообщении, разделяя их переносом строки:\n"
+        "1. Номер бронирования (например, АЗ34ВЕСF0368C)\n"
+        "2. Пункт пропуска (например, Нур Жолы - Хоргос)\n"
+        "3. Дата (например, 04.03.2025)\n"
+        "4. Ориентировочное время (например, 21:00-22:00)\n"
+        "5. Номерной знак транспорта\n"
+        "6. Номерной знак прицепа (если нет, напишите 'нет')\n"
+        "7. Страна регистрации\n\n"
+        "Пример сообщения:\n"
+        "АЗ34ВЕСF0368C\n"
+        "Нур Жолы - Хоргос\n"
         "04.03.2025\n"
         "21:00-22:00\n"
         "ABC123\n"
-        "扶快找\n"
-        "妞忘戒忘抒扼找忘扶"
+        "нет\n"
+        "Казахстан"
     )
 
 async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,7 +46,7 @@ async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Split user input into lines
         lines = update.message.text.split('\n')
         if len(lines) < 7:
-            await update.message.reply_text("妤抉忪忘抖批抄扼找忘, 扭把快忱抉扼找忘志抆找快 志扼快 扶快抉忌抒抉忱我技抑快 忱忘扶扶抑快 (7 扼找把抉抗).")
+            await update.message.reply_text("Пожалуйста, предоставьте все необходимые данные (7 строк).")
             return
 
         # Extract data from user input
@@ -86,27 +86,27 @@ async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         y_position += 40
 
         # Header
-        d.text((50, y_position), "圾局妤妒妊妞均 妒妝 妊妒妊妥圻妙局 尿妣圻妞妥妓妍妖妖妍妨 妍完圻妓圻坏妒", fill="black", font=header_font)
+        d.text((50, y_position), "ВЫПИСКА ИЗ СИСТЕМЫ ЭЛЕКТРОННОЙ ОЧЕРЕДИ", fill="black", font=header_font)
         y_position += 40
 
         # Print date
-        d.text((50, y_position), f"坏忘找忘 我 志把快技攸 把忘扼扭快折忘找抗我: {print_date}", fill="black", font=content_font)
+        d.text((50, y_position), f"Дата и время распечатки: {print_date}", fill="black", font=content_font)
         y_position += 60
 
         # Booking section
-        d.text((50, y_position), "坎妓妍妖妒妓妍圾均妖妒圻", fill="black", font=header_font)
+        d.text((50, y_position), "БРОНИРОВАНИЕ", fill="black", font=header_font)
         y_position += 30
-        d.text((70, y_position), "- 妊找忘找批扼", fill="black", font=content_font)
+        d.text((70, y_position), "- Статус", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- ∮ 忌把抉扶我把抉志忘扶我攸", fill="black", font=content_font)
+        d.text((70, y_position), "- № бронирования", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- 妤批扶抗找 扭把抉扭批扼抗忘", fill="black", font=content_font)
+        d.text((70, y_position), "- Пункт пропуска", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- 坏忘找忘", fill="black", font=content_font)
+        d.text((70, y_position), "- Дата", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- 妍把我快扶找我把抉志抉折扶抉快 志把快技攸", fill="black", font=content_font)
+        d.text((70, y_position), "- Ориентировочное время", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- 妥我扭 抉折快把快忱我", fill="black", font=content_font)
+        d.text((70, y_position), "- Тип очереди", fill="black", font=content_font)
         y_position += 40
 
         # Divider line
@@ -128,19 +128,19 @@ async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         y_position += 20
 
         # Transport section
-        d.text((50, y_position), "妥妓均妖妊妤妍妓妥", fill="black", font=header_font)
+        d.text((50, y_position), "ТРАНСПОРТ", fill="black", font=header_font)
         y_position += 30
-        d.text((70, y_position), "- 妖抉技快把扶抉抄 戒扶忘抗 找把忘扶扼扭抉把找忘", fill="black", font=content_font)
+        d.text((70, y_position), "- Номерной знак транспорта", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- 妖抉技快把扶抉抄 戒扶忘抗 扭把我扯快扭忘", fill="black", font=content_font)
+        d.text((70, y_position), "- Номерной знак прицепа", fill="black", font=content_font)
         y_position += 25
-        d.text((70, y_position), "- 妊找把忘扶忘 把快忍我扼找把忘扯我我", fill="black", font=content_font)
+        d.text((70, y_position), "- Страна регистрации", fill="black", font=content_font)
         y_position += 40
 
         # Transport details
         d.text((50, y_position), vehicle_plate, fill="black", font=bold_font)
         y_position += 30
-        d.text((50, y_position), trailer_plate if trailer_plate.lower() != '扶快找' else "妖快找", fill="black", font=bold_font)
+        d.text((50, y_position), trailer_plate if trailer_plate.lower() != 'нет' else "Нет", fill="black", font=bold_font)
         y_position += 30
         d.text((50, y_position), country, fill="black", font=bold_font)
         y_position += 50
@@ -150,9 +150,9 @@ async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         y_position += 20
 
         # Foundation section
-        d.text((50, y_position), "孜妍妖坏均孛妒岐", fill="black", font=header_font)
+        d.text((50, y_position), "ФОНДАЦИЯ", fill="black", font=header_font)
         y_position += 30
-        d.text((70, y_position), "- 孛我扳把抉志忘攸 扭抖忘找扳抉把技忘 忱抖攸 忌我戒扶快扼忘", fill="black", font=content_font)
+        d.text((70, y_position), "- Цифровая платформа для бизнеса", fill="black", font=content_font)
         y_position += 50
 
         # Divider line
@@ -160,7 +160,7 @@ async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         y_position += 30
 
         # Footer note
-        d.text((50, y_position), "坏抖攸 扭抉忱找志快把忪忱快扶我攸 忌把抉扶我把抉志忘扶我攸 扭把快忱抓攸志我找快 QR 忱抖攸 扼抗忘扶我把抉志忘扶我攸 扶忘 扭批扶抗找快 扭把抉扭批扼抗忘", 
+        d.text((50, y_position), "Для подтверждения бронирования предъявите QR для сканирования на пункте пропуска", 
               fill="black", font=content_font)
         y_position += 50
 
@@ -177,11 +177,11 @@ async def generate_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         img_byte_arr.seek(0)
 
         # Send the image to user
-        await update.message.reply_photo(photo=img_byte_arr, caption="圾忘扮忘 志抑扭我扼抗忘 忍抉找抉志忘!")
+        await update.message.reply_photo(photo=img_byte_arr, caption="Ваша выписка готова!")
 
     except Exception as e:
         logger.error(f"Error generating document: {e}")
-        await update.message.reply_text("妤把抉我戒抉扮抖忘 抉扮我忌抗忘 扭把我 忍快扶快把忘扯我我 忱抉抗批技快扶找忘. 妤抉忪忘抖批抄扼找忘, 扭把抉志快把抆找快 志志快忱快扶扶抑快 忱忘扶扶抑快 我 扭抉扭把抉忌批抄找快 扼扶抉志忘.")
+        await update.message.reply_text("Произошла ошибка при генерации документа. Пожалуйста, проверьте введенные данные и попробуйте снова.")
 
 def main():
     """Start the bot."""
